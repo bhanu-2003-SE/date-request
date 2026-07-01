@@ -115,10 +115,16 @@
         }
 
         .calendar-arrow {
-            color: #b0bec5;
+            color: #ec407a;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 1.2rem;
             user-select: none;
+            padding: 0 10px;
+            font-weight: bold;
+        }
+
+        .calendar-arrow:hover {
+            color: #d81b60;
         }
 
         .weekdays {
@@ -267,46 +273,14 @@
         <p class="sub-title">Pick a day</p>
         <div class="calendar-container">
             <div class="calendar-header">
-                <span class="calendar-arrow">‹</span>
-                <span>June 2026</span>
-                <span class="calendar-arrow">›</span>
+                <span class="calendar-arrow" onclick="changeMonth(-1)">‹</span>
+                <span id="monthYearLabel">July 2026</span>
+                <span class="calendar-arrow" onclick="changeMonth(1)">›</span>
             </div>
             <div class="weekdays">
                 <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
             </div>
-            <div class="days-grid">
-                <div class="day">31</div>
-                <div class="day current-month" onclick="selectDay(this, 1)">1</div>
-                <div class="day current-month" onclick="selectDay(this, 2)">2</div>
-                <div class="day current-month" onclick="selectDay(this, 3)">3</div>
-                <div class="day current-month" onclick="selectDay(this, 4)">4</div>
-                <div class="day current-month" onclick="selectDay(this, 5)">5</div>
-                <div class="day current-month" onclick="selectDay(this, 6)">6</div>
-                <div class="day current-month" onclick="selectDay(this, 7)">7</div>
-                <div class="day current-month" onclick="selectDay(this, 8)">8</div>
-                <div class="day current-month" onclick="selectDay(this, 9)">9</div>
-                <div class="day current-month" onclick="selectDay(this, 10)">10</div>
-                <div class="day current-month" onclick="selectDay(this, 11)">11</div>
-                <div class="day current-month" onclick="selectDay(this, 12)">12</div>
-                <div class="day current-month" onclick="selectDay(this, 13)">13</div>
-                <div class="day current-month" onclick="selectDay(this, 14)">14</div>
-                <div class="day current-month" onclick="selectDay(this, 15)">15</div>
-                <div class="day current-month" onclick="selectDay(this, 16)">16</div>
-                <div class="day current-month" onclick="selectDay(this, 17)">17</div>
-                <div class="day current-month" onclick="selectDay(this, 18)">18</div>
-                <div class="day current-month" onclick="selectDay(this, 19)">19</div>
-                <div class="day current-month" onclick="selectDay(this, 20)">20</div>
-                <div class="day current-month" onclick="selectDay(this, 21)">21</div>
-                <div class="day current-month" onclick="selectDay(this, 22)">22</div>
-                <div class="day current-month" onclick="selectDay(this, 23)">23</div>
-                <div class="day current-month" onclick="selectDay(this, 24)">24</div>
-                <div class="day current-month" onclick="selectDay(this, 25)">25</div>
-                <div class="day current-month" onclick="selectDay(this, 26)">26</div>
-                <div class="day current-month" onclick="selectDay(this, 27)">27</div>
-                <div class="day current-month" onclick="selectDay(this, 28)">28</div>
-                <div class="day current-month" onclick="selectDay(this, 29)">29</div>
-                <div class="day current-month" onclick="selectDay(this, 30)">30</div>
-            </div>
+            <div class="days-grid" id="calendarDaysGrid"></div>
         </div>
 
         <p class="sub-title">What time?</p>
@@ -365,25 +339,87 @@
             food: ""
         };
 
+        // මාස වෙනස් කිරීම track කිරීමට global variables
+        let currentCalendarDate = new Date(); 
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderCalendar();
+        });
+
+        function renderCalendar() {
+            const grid = document.getElementById("calendarDaysGrid");
+            const label = document.getElementById("monthYearLabel");
+            
+            // හැමතිස්සෙම වත්මන් මාසය වෙනුවට currentCalendarDate එකෙන් අගයන් ගනියි
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth(); 
+
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June", 
+                "July", "August", "September", "October", "November", "December"
+            ];
+            
+            label.innerText = `${monthNames[month]} ${year}`;
+            grid.innerHTML = "";
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays = new Date(year, month, 0).getDate();
+
+            // 1. Previous Month Days Padding
+            for (let i = firstDayIndex; i > 0; i--) {
+                const dayDiv = document.createElement("div");
+                dayDiv.classList.add("day");
+                dayDiv.innerText = prevTotalDays - i + 1;
+                grid.appendChild(dayDiv);
+            }
+
+            // 2. Current Month Days Active
+            for (let day = 1; day <= totalDays; day++) {
+                const dayDiv = document.createElement("div");
+                dayDiv.classList.add("day", "current-month");
+                dayDiv.innerText = day;
+                
+                // කලින් select කරපු දවසක් නම් ඒකට selected class එක දෙනවා
+                const formattedMonth = (month + 1).toString().padStart(2, '0');
+                const formattedDay = day.toString().padStart(2, '0');
+                const checkDate = `${year}-${formattedMonth}-${formattedDay}`;
+                if(data.date === checkDate) {
+                    dayDiv.classList.add("selected");
+                }
+
+                dayDiv.onclick = function() {
+                    selectDay(this, day, month + 1, year);
+                };
+                grid.appendChild(dayDiv);
+            }
+        }
+
+        // මාස ඉදිරියට සහ ආපස්සට ගෙන යන ශ්‍රිතය (Function)
+        function changeMonth(direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            renderCalendar();
+        }
+
         function nextScreen(num) {
             document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
             const nextCard = document.getElementById(`screen${num}`);
             nextCard.classList.remove('hidden');
             
-            // Trigger Confetti Celebration on Final Screen!
             if (num === 4) {
                 triggerConfetti();
             }
         }
 
-        // Custom Calendar Day Selection
-        function selectDay(element, dayVal) {
+        function selectDay(element, dayVal, monthVal, yearVal) {
             document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
             element.classList.add('selected');
-            data.date = `2026-06-${dayVal.toString().padStart(2, '0')}`;
+            
+            const formattedMonth = monthVal.toString().padStart(2, '0');
+            const formattedDay = dayVal.toString().padStart(2, '0');
+            data.date = `${yearVal}-${formattedMonth}-${formattedDay}`;
         }
 
-        // Time Selection
         function selectTime(element, timeVal) {
             document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
@@ -398,7 +434,6 @@
             nextScreen(3);
         }
 
-        // Food Selection
         function selectFood(element, foodVal) {
             document.querySelectorAll('.food-btn').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
@@ -412,7 +447,7 @@
             }
             
             const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-            const formattedDate = new Date(data.date).toLocaleDateString('en-US', options);
+            const formattedDate = new Date(data.date.replace(/-/g, '\/')).toLocaleDateString('en-US', options);
 
             document.getElementById('sumDate').innerText = `📅 ${formattedDate}`;
             document.getElementById('sumTime').innerText = `⏰ ${data.time}`;
@@ -421,7 +456,6 @@
             nextScreen(4);
         }
 
-        // Runaway Button Logic
         function moveNoButton() {
             const noBtn = document.getElementById('noBtn');
             const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 40) + 20;
@@ -432,7 +466,6 @@
             noBtn.style.top = `${y}px`;
         }
 
-        // Confetti Burst Animation Function
         function triggerConfetti() {
             var duration = 4 * 1000;
             var end = Date.now() + duration;
