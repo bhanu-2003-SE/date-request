@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Date Request 🌸</title>
-    <!-- Beautiful Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -19,20 +19,27 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
             position: relative;
+            padding: 20px;
         }
 
         .card {
             background: white;
-            padding: 30px;
+            padding: 25px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             text-align: center;
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 380px;
             transition: all 0.4s ease;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .hidden {
@@ -41,8 +48,17 @@
 
         h2 {
             color: #d81b60;
-            margin-bottom: 25px;
-            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .sub-title {
+            color: #616161;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-align: left;
+            font-weight: 500;
         }
 
         /* Buttons Styling */
@@ -63,14 +79,14 @@
             transition: transform 0.2s, background-color 0.2s;
         }
 
-        #yesBtn, .next-btn, .time-btn, .food-btn {
+        #yesBtn, .next-btn {
             background-color: #ec407a;
             color: white;
         }
 
         #yesBtn:hover, .next-btn:hover {
             background-color: #d81b60;
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
 
         #noBtn {
@@ -79,18 +95,98 @@
             transition: all 0.1s ease;
         }
 
-        /* Screen 2 & 3 custom layouts */
-        input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #f8bbd0;
-            border-radius: 12px;
-            outline: none;
-            font-size: 1rem;
-            color: #495057;
+        /* --- Custom Calendar --- */
+        .calendar-container {
+            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            padding: 15px;
+            background: #fafafa;
             margin-bottom: 20px;
         }
 
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #212121;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .calendar-arrow {
+            color: #b0bec5;
+            cursor: pointer;
+            font-size: 0.8rem;
+            user-select: none;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            color: #888;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day {
+            font-size: 0.85rem;
+            padding: 8px 0;
+            color: #b0bec5;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+
+        .day.current-month {
+            color: #212121;
+        }
+
+        .day.current-month:hover {
+            background-color: #f8bbd0;
+            color: #d81b60;
+        }
+
+        .day.selected {
+            background-color: #d81b60 !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        /* --- Time Grid --- */
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .time-btn {
+            background-color: #eeeeee;
+            color: #424242;
+            border-radius: 50px;
+            padding: 8px 0;
+            font-size: 0.72rem;
+            font-weight: 500;
+            border: none;
+        }
+
+        .time-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .time-btn.selected {
+            background-color: #d81b60;
+            color: white;
+        }
+
+        /* Food Grid Layout */
         .grid-options {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -98,7 +194,7 @@
             margin-bottom: 25px;
         }
 
-        .time-btn, .food-btn {
+        .food-btn {
             background-color: #f8bbd0;
             color: #d81b60;
             border-radius: 15px;
@@ -106,7 +202,7 @@
             font-size: 0.95rem;
         }
 
-        .time-btn.selected, .food-btn.selected {
+        .food-btn.selected {
             background-color: #d81b60;
             color: white;
             transform: scale(1.02);
@@ -114,10 +210,9 @@
 
         .next-btn {
             width: 100%;
-            margin-top: 10px;
         }
 
-        /* Final Screen Details styling */
+        /* Final Screen Details */
         .summary-box {
             background-color: #fff0f5;
             padding: 15px;
@@ -135,6 +230,20 @@
             gap: 10px;
         }
 
+        /* Heart Animation Style */
+        .heart-icon {
+            display: inline-block;
+            font-size: 3rem;
+            animation: pulse 1.2s infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
         .footer-note {
             font-size: 0.75rem;
             color: #b0bec5;
@@ -144,7 +253,6 @@
 </head>
 <body>
 
-    <!-- Screen 1: The Proposal -->
     <div id="screen1" class="card">
         <h2>🌸 Will you go on a date with me? 🌸</h2>
         <div class="btn-group">
@@ -153,22 +261,78 @@
         </div>
     </div>
 
-    <!-- Screen 2: Date & Time Picker -->
     <div id="screen2" class="card hidden">
-        <h2>So... when are you free? 🐾</h2>
-        <input type="date" id="datePicker">
+        <h2>So... when are you free? 📅🐾</h2>
         
-        <div class="grid-options">
+        <p class="sub-title">Pick a day</p>
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <span class="calendar-arrow">‹</span>
+                <span>June 2026</span>
+                <span class="calendar-arrow">›</span>
+            </div>
+            <div class="weekdays">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div class="days-grid">
+                <div class="day">31</div>
+                <div class="day current-month" onclick="selectDay(this, 1)">1</div>
+                <div class="day current-month" onclick="selectDay(this, 2)">2</div>
+                <div class="day current-month" onclick="selectDay(this, 3)">3</div>
+                <div class="day current-month" onclick="selectDay(this, 4)">4</div>
+                <div class="day current-month" onclick="selectDay(this, 5)">5</div>
+                <div class="day current-month" onclick="selectDay(this, 6)">6</div>
+                <div class="day current-month" onclick="selectDay(this, 7)">7</div>
+                <div class="day current-month" onclick="selectDay(this, 8)">8</div>
+                <div class="day current-month" onclick="selectDay(this, 9)">9</div>
+                <div class="day current-month" onclick="selectDay(this, 10)">10</div>
+                <div class="day current-month" onclick="selectDay(this, 11)">11</div>
+                <div class="day current-month" onclick="selectDay(this, 12)">12</div>
+                <div class="day current-month" onclick="selectDay(this, 13)">13</div>
+                <div class="day current-month" onclick="selectDay(this, 14)">14</div>
+                <div class="day current-month" onclick="selectDay(this, 15)">15</div>
+                <div class="day current-month" onclick="selectDay(this, 16)">16</div>
+                <div class="day current-month" onclick="selectDay(this, 17)">17</div>
+                <div class="day current-month" onclick="selectDay(this, 18)">18</div>
+                <div class="day current-month" onclick="selectDay(this, 19)">19</div>
+                <div class="day current-month" onclick="selectDay(this, 20)">20</div>
+                <div class="day current-month" onclick="selectDay(this, 21)">21</div>
+                <div class="day current-month" onclick="selectDay(this, 22)">22</div>
+                <div class="day current-month" onclick="selectDay(this, 23)">23</div>
+                <div class="day current-month" onclick="selectDay(this, 24)">24</div>
+                <div class="day current-month" onclick="selectDay(this, 25)">25</div>
+                <div class="day current-month" onclick="selectDay(this, 26)">26</div>
+                <div class="day current-month" onclick="selectDay(this, 27)">27</div>
+                <div class="day current-month" onclick="selectDay(this, 28)">28</div>
+                <div class="day current-month" onclick="selectDay(this, 29)">29</div>
+                <div class="day current-month" onclick="selectDay(this, 30)">30</div>
+            </div>
+        </div>
+
+        <p class="sub-title">What time?</p>
+        <div class="time-grid">
+            <button class="time-btn" onclick="selectTime(this, '9:00 AM')">9:00 AM</button>
+            <button class="time-btn" onclick="selectTime(this, '10:00 AM')">10:00 AM</button>
+            <button class="time-btn" onclick="selectTime(this, '11:00 AM')">11:00 AM</button>
+            <button class="time-btn" onclick="selectTime(this, '11:30 AM')">11:30 AM</button>
+            
             <button class="time-btn" onclick="selectTime(this, '12:00 PM')">12:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '1:00 PM')">1:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '2:00 PM')">2:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '3:00 PM')">3:00 PM</button>
             <button class="time-btn" onclick="selectTime(this, '4:00 PM')">4:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '5:00 PM')">5:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '6:00 PM')">6:00 PM</button>
             <button class="time-btn" onclick="selectTime(this, '6:30 PM')">6:30 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '7:00 PM')">7:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '7:30 PM')">7:30 PM</button>
             <button class="time-btn" onclick="selectTime(this, '8:00 PM')">8:00 PM</button>
+            <button class="time-btn" onclick="selectTime(this, '8:30 PM')">8:30 PM</button>
         </div>
         
-        <button onclick="checkScreen2()" class="next-btn">Set the date 💕</button>
+        <button onclick="checkScreen2()" class="next-btn">Set the date ❤️</button>
     </div>
 
-    <!-- Screen 3: Food Options -->
     <div id="screen3" class="card hidden">
         <h2>What are we feeling? 🍕✨</h2>
         <div class="grid-options">
@@ -182,9 +346,9 @@
         <button onclick="checkScreen3()" class="next-btn">Next 💕</button>
     </div>
 
-    <!-- Screen 4: Summary & Celebration -->
     <div id="screen4" class="card hidden">
-        <h2>YAY!! 💖</h2>
+        <span class="heart-icon">💖</span>
+        <h2>YAY!! IT'S A DATE!</h2>
         <div class="summary-box">
             <div class="summary-item" id="sumDate">📅 </div>
             <div class="summary-item" id="sumTime">⏰ </div>
@@ -203,10 +367,23 @@
 
         function nextScreen(num) {
             document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-            document.getElementById(`screen${num}`).classList.remove('hidden');
+            const nextCard = document.getElementById(`screen${num}`);
+            nextCard.classList.remove('hidden');
+            
+            // Trigger Confetti Celebration on Final Screen!
+            if (num === 4) {
+                triggerConfetti();
+            }
         }
 
-        // Screen 2 Logic
+        // Custom Calendar Day Selection
+        function selectDay(element, dayVal) {
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+            element.classList.add('selected');
+            data.date = `2026-06-${dayVal.toString().padStart(2, '0')}`;
+        }
+
+        // Time Selection
         function selectTime(element, timeVal) {
             document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
@@ -214,7 +391,6 @@
         }
 
         function checkScreen2() {
-            data.date = document.getElementById('datePicker').value;
             if(!data.date || !data.time) {
                 alert("Please select both Date and Time! 🥰");
                 return;
@@ -222,7 +398,7 @@
             nextScreen(3);
         }
 
-        // Screen 3 Logic
+        // Food Selection
         function selectFood(element, foodVal) {
             document.querySelectorAll('.food-btn').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
@@ -235,11 +411,9 @@
                 return;
             }
             
-            // Format dynamic date display
-            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
             const formattedDate = new Date(data.date).toLocaleDateString('en-US', options);
 
-            // Populate Final Screen
             document.getElementById('sumDate').innerText = `📅 ${formattedDate}`;
             document.getElementById('sumTime').innerText = `⏰ ${data.time}`;
             document.getElementById('sumFood').innerText = `🍽️ ${data.food}`;
@@ -247,16 +421,42 @@
             nextScreen(4);
         }
 
-        // The "Runaway" No Button Logic 
+        // Runaway Button Logic
         function moveNoButton() {
             const noBtn = document.getElementById('noBtn');
-            // Randomly position within screen bounds minus button width/height
             const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 40) + 20;
             const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - 40) + 20;
             
             noBtn.style.position = 'absolute';
             noBtn.style.left = `${x}px`;
             noBtn.style.top = `${y}px`;
+        }
+
+        // Confetti Burst Animation Function
+        function triggerConfetti() {
+            var duration = 4 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ec407a', '#d81b60', '#ff8a80']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ec407a', '#d81b60', '#ff8a80']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
         }
     </script>
 </body>
