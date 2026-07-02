@@ -127,6 +127,13 @@
             color: #d81b60;
         }
 
+        /* පහුගිය මාස වලට යන්න බැරි වෙන්න arrow එක disabled කරන style එක */
+        .calendar-arrow.disabled {
+            color: #e0e0e0 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
         .weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -144,19 +151,30 @@
         .day {
             font-size: 0.85rem;
             padding: 8px 0;
-            color: #b0bec5;
-            cursor: pointer;
+            color: #e0e0e0; /* කලින් මාස වල දවස් ලා අළු පාටින් */
+            cursor: default;
             border-radius: 50px;
             transition: all 0.2s;
+            pointer-events: none; /* Click කරන්න බැරි වෙන්න */
         }
 
         .day.current-month {
             color: #212121;
+            cursor: pointer;
+            pointer-events: auto; /* වත්මන් මාසයේ දවස් වලට click කල හැක */
         }
 
         .day.current-month:hover {
             background-color: #f8bbd0;
             color: #d81b60;
+        }
+
+        /* පහුගිය දවස් වලට අදාල style එක (ලා අළු පැහැය සහ click කල නොහැක) */
+        .day.past-date {
+            color: #e0e0e0 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            background: none !important;
         }
 
         .day.selected {
@@ -273,8 +291,8 @@
         <p class="sub-title">Pick a day</p>
         <div class="calendar-container">
             <div class="calendar-header">
-                <span class="calendar-arrow" onclick="changeMonth(-1)">‹</span>
-                <span id="monthYearLabel">July 2026</span>
+                <span class="calendar-arrow" id="prevMonthBtn" onclick="changeMonth(-1)">‹</span>
+                <span id="monthYearLabel"></span>
                 <span class="calendar-arrow" onclick="changeMonth(1)">›</span>
             </div>
             <div class="weekdays">
@@ -339,8 +357,10 @@
             food: ""
         };
 
-        // මාස වෙනස් කිරීම track කිරීමට global variables
         let currentCalendarDate = new Date(); 
+        const realToday = new Date(); // අද දිනය සසඳන්න වෙනම තියාගන්නවා
+        // කාලය 00:00:00 කලා දින පමණක් නිවැරදිව සැසඳීමට
+        realToday.setHours(0,0,0,0); 
 
         document.addEventListener("DOMContentLoaded", () => {
             renderCalendar();
@@ -349,8 +369,8 @@
         function renderCalendar() {
             const grid = document.getElementById("calendarDaysGrid");
             const label = document.getElementById("monthYearLabel");
+            const prevBtn = document.getElementById("prevMonthBtn");
             
-            // හැමතිස්සෙම වත්මන් මාසය වෙනුවට currentCalendarDate එකෙන් අගයන් ගනියි
             const year = currentCalendarDate.getFullYear();
             const month = currentCalendarDate.getMonth(); 
 
@@ -361,6 +381,13 @@
             
             label.innerText = `${monthNames[month]} ${year}`;
             grid.innerHTML = "";
+
+            // වත්මන් මාසය/අවුරුද්ද, සැබෑ වත්මන් මාසයට වඩා අඩු හෝ සමාන නම් Back Arrow එක disabled කරනවා
+            if (year < realToday.getFullYear() || (year === realToday.getFullYear() && month <= realToday.getMonth())) {
+                prevBtn.classList.add("disabled");
+            } else {
+                prevBtn.classList.remove("disabled");
+            }
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -380,23 +407,38 @@
                 dayDiv.classList.add("day", "current-month");
                 dayDiv.innerText = day;
                 
-                // කලින් select කරපු දවසක් නම් ඒකට selected class එක දෙනවා
-                const formattedMonth = (month + 1).toString().padStart(2, '0');
-                const formattedDay = day.toString().padStart(2, '0');
-                const checkDate = `${year}-${formattedMonth}-${formattedDay}`;
-                if(data.date === checkDate) {
-                    dayDiv.classList.add("selected");
-                }
+                // දැනට render වෙන දවස Past date එකක්දැයි බලනවා
+                const thisDate = new Date(year, month, day);
+                thisDate.setHours(0,0,0,0);
 
-                dayDiv.onclick = function() {
-                    selectDay(this, day, month + 1, year);
-                };
+                if (thisDate < realToday) {
+                    // පහුගිය දවසක් නම් past-date class එක දෙනවා (ලා අළු පැහැ වේ)
+                    dayDiv.classList.add("past-date");
+                } else {
+                    // ඉදිරි දවසක් නම් පමණක් click කල හැක
+                    const formattedMonth = (month + 1).toString().padStart(2, '0');
+                    const formattedDay = day.toString().padStart(2, '0');
+                    const checkDate = `${year}-${formattedMonth}-${formattedDay}`;
+                    
+                    if(data.date === checkDate) {
+                        dayDiv.classList.add("selected");
+                    }
+
+                    dayDiv.onclick = function() {
+                        selectDay(this, day, month + 1, year);
+                    };
+                }
                 grid.appendChild(dayDiv);
             }
         }
 
-        // මාස ඉදිරියට සහ ආපස්සට ගෙන යන ශ්‍රිතය (Function)
         function changeMonth(direction) {
+            // පසුගිය මාස වලට යාම වැලැක්වීම
+            const targetDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + direction, 1);
+            if (direction === -1 && (targetDate.getFullYear() < realToday.getFullYear() || (targetDate.getFullYear() === realToday.getFullYear() && targetDate.getMonth() < realToday.getMonth()))) {
+                return; 
+            }
+            
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
             renderCalendar();
         }
